@@ -67,7 +67,9 @@
       "**/hardhat-ts/**"
     ]
   },
-  "dependencies": {},
+  "dependencies": {
+    "@chainlink/contracts": "^0.4.0"
+  },
   "devDependencies": {
     "husky": "^7.0.2"
   }
