@@ -24,9 +24,30 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     log: true,
     waitConfirmations: 5,
   });
+  await deploy("ColorsNFT", {
+    // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
+    from: deployer,
+    // args: [ "Hello", ethers.utils.parseEther("1.5") ],
+    log: true,
+    waitConfirmations: 5,
+  });
+  //Transfer 1 NFT 
+
+  await deploy("ColorModifiers", {
+    // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
+    from: deployer,
+    // args: [ "Hello", ethers.utils.parseEther("1.5") ],
+    log: true,
+    waitConfirmations: 5,
+  });
+  // Transfer 100 dark paint coins and 100 white paint coins
+  const ColorModifiers = await ethers.getContract("ColorModifiers", deployer);
+
+  await ColorModifiers.safeTransferFrom(deployer, "0x990Ae48efDD87Ba85dEf8fb6633d0B7155539720", 1, 100, "0x00");
+  await ColorModifiers.safeTransferFrom(deployer, "0x990Ae48efDD87Ba85dEf8fb6633d0B7155539720", 0, 100, "0x00");
 
   // Getting a previously deployed contract
-  const YourContract = await ethers.getContract("YourContract", deployer);
+
   /*  await YourContract.setPurpose("Hello");
   
     To take ownership of yourContract using the ownable library uncomment next line and add the 
@@ -76,4 +97,4 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   //   console.error(error);
   // }
 };
-module.exports.tags = ["YourContract"];
+module.exports.tags = ["YourContract", "ColoroModifiers", "ColorsNFT"];

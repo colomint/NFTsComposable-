@@ -29,7 +29,7 @@ import externalContracts from "./contracts/external_contracts";
 // contracts
 import deployedContracts from "./contracts/hardhat_contracts.json";
 import { Transactor, Web3ModalSetup } from "./helpers";
-import { Home, ExampleUI, Hints, Subgraph } from "./views";
+import { Home, ExampleUI, Hints, Subgraph, BuyAndModifyColor } from "./views";
 import { useStaticJsonRPC } from "./hooks";
 
 const { ethers } = require("ethers");
@@ -168,6 +168,38 @@ function App(props) {
 
   // keep track of a variable from the contract in the local React state:
   const purpose = useContractReader(readContracts, "YourContract", "randomHash");
+  // keep track of white paint
+  // const whitePaint = useContractReader(readContracts, "ColorsNFT", "balanceOf");
+  // console.log("whitePaint", whitePaint);
+  // // dark paint
+  // const darkPaint = useContractReader(readContracts, "ColorModifiers", "balanceOf", ["0x990Ae48efDD87Ba85dEf8fb6633d0B7155539720", 0]);
+
+  const darkPaint = useContractReader(readContracts, "ColorModifiers", "getBalanceDarkPaint", [
+    address,
+  ]);
+
+
+  const whitePaint = useContractReader(readContracts, "ColorModifiers", "getBalanceWhitePaint", [address]);
+
+
+  const listOfTokensPerUser = useContractReader(readContracts, "ColorsNFT", "getColorsByOwner", [address,]);
+
+  const colorTokenList = useContractReader(readContracts, "ColorsNFT", "_colorTokenList");
+
+  console.log(colorTokenList);
+  const userTables = 0;
+
+
+
+
+
+
+
+  // const darkPaint = readContracts["ColorModifiers"]?.balanceOf("0x990Ae48efDD87Ba85dEf8fb6633d0B7155539720", 0);
+
+
+  // const whitePaint = readContracts["ColorModifiers"]?.balanceOf("0x990Ae48efDD87Ba85dEf8fb6633d0B7155539720", 1);
+
 
   /*
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
@@ -263,12 +295,16 @@ function App(props) {
         <Menu.Item key="/debug">
           <Link to="/debug">Debug Contracts</Link>
         </Menu.Item>
+        <Menu.Item key="/exampleui">
+          <Link to="/exampleui">Buy Color NFT and modify</Link>
+        </Menu.Item>
 
       </Menu>
 
       <Switch>
         <Route exact path="/">
           {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
+          {/* <Home yourLocalBalance={yourLocalBalance} readContracts={readContracts} /> */}
           <ExampleUI
             address={address}
             userSigner={userSigner}
@@ -298,6 +334,24 @@ function App(props) {
             blockExplorer={blockExplorer}
             contractConfig={contractConfig}
           />
+          <Contract
+            name="ColorsNFT"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+          <Contract
+            name="ColorModifiers"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
         </Route>
         <Route path="/hints">
           <Hints
@@ -308,7 +362,7 @@ function App(props) {
           />
         </Route>
         <Route path="/exampleui">
-          <ExampleUI
+          <BuyAndModifyColor
             address={address}
             userSigner={userSigner}
             mainnetProvider={mainnetProvider}
@@ -319,6 +373,11 @@ function App(props) {
             writeContracts={writeContracts}
             readContracts={readContracts}
             purpose={purpose}
+            whitePaint={whitePaint}
+            darkPaint={darkPaint}
+            userTables={userTables}
+            listOfTokensPerUser={listOfTokensPerUser}
+            colorTokenList={colorTokenList}
           />
         </Route>
         <Route path="/mainnetdai">

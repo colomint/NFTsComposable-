@@ -17,6 +17,7 @@ contract YourContract is VRFConsumerBase {
 
     uint256 public randomness;
     bytes32 public randomHash;
+    uint256 public randomBytes;
 
     constructor()
         VRFConsumerBase(
@@ -43,5 +44,7 @@ contract YourContract is VRFConsumerBase {
         randomness = _randomness;
 
         randomHash = keccak256(abi.encodePacked(_randomness));
+
+        randomBytes = _randomness % (2**24);
     }
 }

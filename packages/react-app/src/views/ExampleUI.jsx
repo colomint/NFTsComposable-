@@ -20,12 +20,12 @@ export default function ExampleUI({
 
 
   const hexColor = "#" + purpose?.substring(2, 8);
-
+  console.log(hexColor);
   const result = hexToRgb(hexColor);
 
-  const colorR = result.r;
-  const colorG = result.g;
-  const colorB = result.b;
+  const colorR = result?.r;
+  const colorG = result?.g;
+  const colorB = result?.b;
 
 
   function hexToRgb(hex) {
