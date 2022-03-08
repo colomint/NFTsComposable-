@@ -8,6 +8,12 @@ contract ColorModifiers is ERC1155, Ownable {
     uint256 public constant DARKPAINT = 0;
     uint256 public constant WHITEPAINT = 1;
 
+    struct RGB {
+        uint256 R;
+        uint256 G;
+        uint256 B;
+    }
+
     constructor() ERC1155("https://game.example/api/item{id}.json") {
         _mint(msg.sender, DARKPAINT, 2000, "");
         _mint(msg.sender, WHITEPAINT, 2000, "");

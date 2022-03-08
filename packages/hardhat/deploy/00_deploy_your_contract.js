@@ -17,13 +17,13 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const { deployer } = await getNamedAccounts();
   const chainId = await getChainId();
 
-  await deploy("YourContract", {
-    // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
-    from: deployer,
-    // args: [ "Hello", ethers.utils.parseEther("1.5") ],
-    log: true,
-    waitConfirmations: 5,
-  });
+  // await deploy("YourContract", {
+  //   // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
+  //   from: deployer,
+  //   // args: [ "Hello", ethers.utils.parseEther("1.5") ],
+  //   log: true,
+  //   waitConfirmations: 5,
+  // });
   await deploy("ColorsNFT", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
@@ -40,11 +40,32 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     log: true,
     waitConfirmations: 5,
   });
-  // Transfer 100 dark paint coins and 100 white paint coins
-  const ColorModifiers = await ethers.getContract("ColorModifiers", deployer);
 
-  await ColorModifiers.safeTransferFrom(deployer, "0x990Ae48efDD87Ba85dEf8fb6633d0B7155539720", 1, 100, "0x00");
-  await ColorModifiers.safeTransferFrom(deployer, "0x990Ae48efDD87Ba85dEf8fb6633d0B7155539720", 0, 100, "0x00");
+
+
+  await deploy("Jackpot", {
+    // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
+    from: deployer,
+    // args: [ "Hello", ethers.utils.parseEther("1.5") ],
+    log: true,
+    waitConfirmations: 5,
+  });
+
+  const Jackpot = await ethers.getContract("Jackpot", deployer);
+
+  const colorModifiersAddress = await Jackpot.colorModifiersAddress();
+
+  const ColorModifiers = await ethers.getContract("ColorModifiers", colorModifiersAddress);
+
+
+  const test = await ColorModifiers.getBalanceWhitePaint(deployer);
+
+  console.log(test);
+  // await ColorModifiers.safeTransferFrom(deployer, "0x990Ae48efDD87Ba85dEf8fb6633d0B7155539720", 1, 100, "0x00");
+  // await ColorModifiers.safeTransferFrom(deployer, "0x990Ae48efDD87Ba85dEf8fb6633d0B7155539720", 0, 100, "0x00");
+
+  // const tx = await ColorModifiers.mint();
+
 
   // Getting a previously deployed contract
 
@@ -97,4 +118,4 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   //   console.error(error);
   // }
 };
-module.exports.tags = ["YourContract", "ColoroModifiers", "ColorsNFT"];
+module.exports.tags = ["Jackpot"];

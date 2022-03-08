@@ -5,7 +5,8 @@ import { SyncOutlined } from "@ant-design/icons";
 import { useContractReader, usePoller } from "eth-hooks";
 import { Address, Balance, Events } from "../components";
 import { ethers } from "ethers";
-
+import { useEthers, useEtherBalance, useContractFunction, useCall, useContractCall } from "@usedapp/core"
+import ColorsModifiers from "../contracts/ColorModifiers.json";
 export default function BuyAndModifyColor({
     purpose,
     address,
@@ -21,19 +22,77 @@ export default function BuyAndModifyColor({
     userTables,
     listOfTokensPerUser,
     colorTokenList,
+    userSigner,
+    ColorsModifiersContract,
+    colorModifiersAddress
 
 }) {
     const [newRColor, setNewRColor] = useState("")
     const [newGColor, setNewGColor] = useState("")
     const [newBColor, setNewBColor] = useState("")
 
+
+    const ColorsModifiersABI = ColorsModifiers.abi;
+
+
+    // const ColorsModifiersInterface = new utils.Interface(ColorsModifiersABI);
+
+
+
+
     console.log("darkPaint", parseInt(darkPaint._hex, 16));
 
     console.log(userTables);
 
     const darkPaint2 = useContractReader(readContracts, "ColorModifiers", "getBalance", [address, 1])
-
     console.log("darkPaint2", darkPaint2);
+
+    const { state: mintTokensState, send: mintTokensSend } = useContractFunction(ColorsModifiersContract, "mint", userSigner)
+
+    function useTotalSupply() {
+        const { value, error } = useCall(colorModifiersAddress && {
+            contract: ColorsModifiersContract,
+            method: 'getBalanceWhitePaint',
+            args: [address],
+        }) ?? {}
+        if (error) {
+            console.error(error.message)
+            return undefined
+        }
+        return value?.[0]
+    }
+
+    // function useTotalSupply() {
+    //     const [tokenBalance] =
+    //         useContractCall(
+    //             address &&
+    //             colorModifiersAddress && {
+    //                 abi: ColorsModifiersInterface,
+    //                 address: colorModifiersAddress,
+    //                 method: 'getBalanceWhitePaint',
+    //                 args: [address],
+    //             }
+    //         ) ?? []
+    //     return tokenBalance
+    // }
+
+    console.log(address);
+    const totalSupply = useTotalSupply()
+    console.log("totalSupply", totalSupply);
+
+    const etherBalance = useEtherBalance(address);
+
+    console.log(etherBalance);
+
+
+    // const balanceOfOwner = useContractFunction(ColorsModifiersContract, "getBalanceDarkPaint", address, userSigner)
+
+
+
+    // console.log("balanceOfOwner", balanceOfOwner);
+
+
+
     const darkPaintInt = parseInt(darkPaint._hex, 16);
     const whitePaintInt = parseInt(whitePaint._hex, 16);
 
@@ -74,6 +133,12 @@ export default function BuyAndModifyColor({
 
     }
 
+    async function test() {
+        return mintTokensSend();
+
+
+
+    }
     async function addBlackPaint(Id) {
 
         const byteNumber = "0x" + ("0".repeat(64) + Id).slice(-64) + "";
@@ -176,10 +241,12 @@ export default function BuyAndModifyColor({
                 <h4>Your white paints {whitePaintInt}</h4>
             </div>
             <Button size="small"
-                onClick={() => getPaint()}
+                onClick={() => test()}
             >
-                GET  100 paint
+                test
             </Button>
+            <h1>test {totalSupply}</h1>
+
 
         </>
     );

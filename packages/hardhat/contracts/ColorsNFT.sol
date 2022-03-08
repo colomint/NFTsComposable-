@@ -12,17 +12,21 @@ contract ColorsNFT is ERC721, ERC1155Holder, Ownable {
     uint256 public maxSupply;
     bool public isMintEnabled = true;
     mapping(address => uint256) public mintedTokens;
-    mapping(uint256 => RGB) public tokenToColor;
+
+    mapping(uint256 => uint256) public tokenToColor;
+    mapping(uint256 => uint256) public colorToToken;
+
     mapping(address => uint256[]) public ownerToTokens;
-    RGB[] public colorTokenList;
+    mapping(uint256 => address payable) public tokenToOwner;
 
-    struct RGB {
-        uint256 R;
-        uint256 G;
-        uint256 B;
-    }
+    // struct RGB {
+    //     uint256 R;
+    //     uint256 G;
+    //     uint256 B;
+    // }
+    uint256[] public colorTokenList;
 
-    event RGBChanged(uint256 tokenId, RGB newRGB);
+    // event RGBChanged(uint256 tokenId, RGB newRGB);
 
     // ERC1155 mapping (how much of each color modifier it has)
 
@@ -60,9 +64,19 @@ contract ColorsNFT is ERC721, ERC1155Holder, Ownable {
         totalSupply++;
         uint256 tokenId = totalSupply;
         _safeMint(msg.sender, tokenId);
-        tokenToColor[tokenId - 1] = RGB(_r, _g, _b);
-        colorTokenList.push(RGB(_r, _g, _b));
+
+        //Color and Tokens relations
+        uint256 rgbInt = rgbToInt(_r, _g, _b);
+
+        tokenToColor[tokenId - 1] = rgbInt;
+        colorToToken[rgbInt] = tokenId - 1;
+
+        // owner and Tokens relations
         ownerToTokens[msg.sender].push(tokenId - 1);
+        tokenToOwner[tokenId - 1] = payable(msg.sender);
+
+        // list of nfts with their colors
+        colorTokenList.push(rgbInt);
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -90,23 +104,13 @@ contract ColorsNFT is ERC721, ERC1155Holder, Ownable {
         console.log("tokenID", id);
 
         if (id == DARKPAINT) {
-            tokenToColor[colorNFTId].R = (tokenToColor[colorNFTId].R * 1) / 3;
-            tokenToColor[colorNFTId].G = (tokenToColor[colorNFTId].G * 1) / 3;
-            tokenToColor[colorNFTId].B = (tokenToColor[colorNFTId].B * 1) / 3;
+            tokenToColor[colorNFTId] = (tokenToColor[colorNFTId] * 1) / 3;
         } else {
-            tokenToColor[colorNFTId].R = (tokenToColor[colorNFTId].R * 3) / 2;
-            tokenToColor[colorNFTId].G = (tokenToColor[colorNFTId].G * 3) / 2;
-            tokenToColor[colorNFTId].B = (tokenToColor[colorNFTId].B * 3) / 2;
+            tokenToColor[colorNFTId] = tokenToColor[colorNFTId] * 3;
         }
 
-        console.log(tokenToColor[colorNFTId].R);
-
-        colorTokenList[colorNFTId] = RGB(
-            tokenToColor[colorNFTId].R,
-            tokenToColor[colorNFTId].G,
-            tokenToColor[colorNFTId].B
-        );
-        emit RGBChanged(colorNFTId, tokenToColor[colorNFTId]);
+        colorTokenList[colorNFTId] = tokenToColor[colorNFTId];
+        // emit RGBChanged(colorNFTId, tokenToColor[colorNFTId]);
         return
             bytes4(
                 bytes4(
@@ -127,6 +131,16 @@ contract ColorsNFT is ERC721, ERC1155Holder, Ownable {
         }
     }
 
+    function rgbToInt(
+        uint256 _r,
+        uint256 _g,
+        uint256 _b
+    ) internal pure returns (uint256) {
+        uint256 rgb = 256**2 * _r + 256 * _r + _b; // Transform RGB into uint256
+
+        return rgb;
+    }
+
     function getColorsByOwner(address _owner)
         external
         view
@@ -135,7 +149,7 @@ contract ColorsNFT is ERC721, ERC1155Holder, Ownable {
         return ownerToTokens[_owner];
     }
 
-    function _colorTokenList() public view returns (RGB[] memory) {
+    function _colorTokenList() public view returns (uint256[] memory) {
         return colorTokenList;
     }
 }
