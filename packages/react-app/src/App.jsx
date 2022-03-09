@@ -37,7 +37,7 @@ import { useStaticJsonRPC } from "./hooks";
 import ColorsNFT from "./contracts/ColorsNFT.json";
 import ColorsModifiers from "./contracts/ColorModifiers.json";
 import { Contract as ContractEthers } from "@ethersproject/contracts";
-import { useEthers, useContractFunction, DAppProvider, ChainId } from "@usedapp/core"
+import { useEthers, useContractFunction, DAppProvider, Rinkeby } from "@usedapp/core"
 import { constants, utils } from "ethers"
 
 
@@ -302,7 +302,7 @@ function App(props) {
 
   return (
     <DAppProvider config={{
-      supportedChains: [ChainId.Rinkeby],
+      networks: [Rinkeby],
       notifications: {
         expirationPeriod: 1000,
         checkInterval: 1000
