@@ -74,6 +74,8 @@ const USE_NETWORK_SELECTOR = false;
 
 const web3Modal = Web3ModalSetup();
 
+
+
 // 🛰 providers
 const providers = [
   "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
@@ -104,6 +106,9 @@ function App(props) {
 
   if (DEBUG) console.log(`Using ${selectedNetwork} network`);
 
+
+
+
   // 🛰 providers
   if (DEBUG) console.log("📡 Connecting to Mainnet Ethereum");
 
@@ -126,6 +131,7 @@ function App(props) {
   const userProviderAndSigner = useUserProviderAndSigner(injectedProvider, localProvider, USE_BURNER_WALLET);
   const userSigner = userProviderAndSigner.signer;
 
+
   useEffect(() => {
     async function getAddress() {
       if (userSigner) {
@@ -135,6 +141,8 @@ function App(props) {
     }
     getAddress();
   }, [userSigner]);
+
+
 
   // You can warn the user if you would like them to be on a specific network
   const localChainId = localProvider && localProvider._network && localProvider._network.chainId;
@@ -155,6 +163,7 @@ function App(props) {
   // const contractConfig = useContractConfig();
 
   const contractConfig = { deployedContracts: deployedContracts || {}, externalContracts: externalContracts || {} };
+
 
   // Load in your local 📝 contract and read a value from it:
   const readContracts = useContractLoader(localProvider, contractConfig);
@@ -203,16 +212,25 @@ function App(props) {
   ///// 
   const colorModifiersAddress = useContractReader(readContracts, "Jackpot", "colorModifiersAddress");
 
+  const colorsNFTAddress = useContractReader(readContracts, "Jackpot", "colorsNFTAddress");
+  console.log(colorsNFTAddress);
   const purpose = "tt";
   const ColorsModifiersABI = ColorsModifiers.abi;
 
 
   const ColorsModifiersInterface = new utils.Interface(ColorsModifiersABI);
-  let ColorsModifiersContract
+  let colorModifiersContract
   if (colorModifiersAddress) {
-    ColorsModifiersContract = new ContractEthers(colorModifiersAddress, ColorsModifiersInterface, userSigner)
+    colorModifiersContract = new ContractEthers(colorModifiersAddress, ColorsModifiersInterface, userSigner)
   }
 
+  const ColorsNFTABI = ColorsNFT.abi;
+
+  const ColorsNFTInterface = new utils.Interface(ColorsNFTABI);
+  let colorNFTContract
+  if (colorsNFTAddress) {
+    colorNFTContract = new ContractEthers(colorsNFTAddress, ColorsNFTInterface, userSigner)
+  }
 
 
 
@@ -288,6 +306,7 @@ function App(props) {
     provider.on("disconnect", (code, reason) => {
       console.log(code, reason);
       logoutOfWeb3Modal();
+
     });
     // eslint-disable-next-line
   }, [setInjectedProvider]);
@@ -300,140 +319,151 @@ function App(props) {
 
   const faucetAvailable = localProvider && localProvider.connection && targetNetwork.name.indexOf("local") !== -1;
 
+  /// userdapp 
+
+
+  const { activateBrowserWallet, deactivate, account } = useEthers()
+  ///
+
+
+
+  useEffect(() => {
+    if (userSigner) {
+      activateBrowserWallet();
+    }
+  }, [activateBrowserWallet, userSigner]);
+
+
   return (
-    <DAppProvider config={{
-      networks: [Rinkeby],
-      notifications: {
-        expirationPeriod: 1000,
-        checkInterval: 1000
-      }
-    }}>
-      <div className="App">
-        {/* ✏️ Edit the header and change the title to your project name */}
-        <Header />
-        <NetworkDisplay
-          NETWORKCHECK={NETWORKCHECK}
-          localChainId={localChainId}
-          selectedChainId={selectedChainId}
-          targetNetwork={targetNetwork}
-          logoutOfWeb3Modal={logoutOfWeb3Modal}
-          USE_NETWORK_SELECTOR={USE_NETWORK_SELECTOR}
-        />
-        <Menu style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
-          <Menu.Item key="/">
-            <Link to="/">App Home</Link>
-          </Menu.Item>
-          <Menu.Item key="/debug">
-            <Link to="/debug">Debug Contracts</Link>
-          </Menu.Item>
-          <Menu.Item key="/exampleui">
-            <Link to="/exampleui">Buy Color NFT and modify</Link>
-          </Menu.Item>
 
-        </Menu>
+    <div className="App">
+      {/* ✏️ Edit the header and change the title to your project name */}
+      <Header />
+      <NetworkDisplay
+        NETWORKCHECK={NETWORKCHECK}
+        localChainId={localChainId}
+        selectedChainId={selectedChainId}
+        targetNetwork={targetNetwork}
+        logoutOfWeb3Modal={logoutOfWeb3Modal}
+        USE_NETWORK_SELECTOR={USE_NETWORK_SELECTOR}
+      />
+      <Menu style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
+        <Menu.Item key="/">
+          <Link to="/">App Home</Link>
+        </Menu.Item>
+        <Menu.Item key="/debug">
+          <Link to="/debug">Debug Contracts</Link>
+        </Menu.Item>
+        <Menu.Item key="/exampleui">
+          <Link to="/exampleui">Buy Color NFT and modify</Link>
+        </Menu.Item>
 
-        <Switch>
-          <Route exact path="/">
-            {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
-            {/* <Home yourLocalBalance={yourLocalBalance} readContracts={readContracts} /> */}
-            <ExampleUI
-              address={address}
-              userSigner={userSigner}
-              mainnetProvider={mainnetProvider}
-              localProvider={localProvider}
-              yourLocalBalance={yourLocalBalance}
-              price={price}
-              tx={tx}
-              writeContracts={writeContracts}
-              readContracts={readContracts}
-              purpose={purpose}
-            />
-          </Route>
-          <Route exact path="/debug">
-            {/*
+      </Menu>
+
+      <Switch>
+        <Route exact path="/">
+          {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
+          {/* <Home yourLocalBalance={yourLocalBalance} readContracts={readContracts} /> */}
+          <ExampleUI
+            address={address}
+            userSigner={userSigner}
+            mainnetProvider={mainnetProvider}
+            localProvider={localProvider}
+            yourLocalBalance={yourLocalBalance}
+            price={price}
+            tx={tx}
+            writeContracts={writeContracts}
+            readContracts={readContracts}
+            purpose={purpose}
+          />
+        </Route>
+        <Route exact path="/debug">
+          {/*
                 🎛 this scaffolding is full of commonly used components
                 this <Contract/> component will automatically parse your ABI
                 and give you a form to interact with it locally
             */}
 
-            <Contract
-              name="YourContract"
-              price={price}
-              signer={userSigner}
-              provider={localProvider}
-              address={address}
-              blockExplorer={blockExplorer}
-              contractConfig={contractConfig}
-            />
-            <Contract
-              name="ColorsNFT"
-              price={price}
-              signer={userSigner}
-              provider={localProvider}
-              address={address}
-              blockExplorer={blockExplorer}
-              contractConfig={contractConfig}
-            />
-            <Contract
-              name="ColorModifiers"
-              price={price}
-              signer={userSigner}
-              provider={localProvider}
-              address={colorModifiersAddress}
-              blockExplorer={blockExplorer}
-              contractConfig={contractConfig}
-            />
-            <Contract
-              name="Jackpot"
-              price={price}
-              signer={userSigner}
-              provider={localProvider}
-              address={address}
-              blockExplorer={blockExplorer}
-              contractConfig={contractConfig}
-            />
-          </Route>
-          <Route path="/hints">
-            <Hints
-              address={address}
-              yourLocalBalance={yourLocalBalance}
-              mainnetProvider={mainnetProvider}
-              price={price}
-            />
-          </Route>
-          <Route path="/exampleui">
-            <BuyAndModifyColor
-              address={address}
-              userSigner={userSigner}
-              mainnetProvider={mainnetProvider}
-              localProvider={localProvider}
-              yourLocalBalance={yourLocalBalance}
-              price={price}
-              tx={tx}
-              writeContracts={writeContracts}
-              readContracts={readContracts}
-              purpose={purpose}
-              whitePaint={whitePaint}
-              darkPaint={darkPaint}
-              userTables={userTables}
-              listOfTokensPerUser={listOfTokensPerUser}
-              colorTokenList={colorTokenList}
-              ColorsModifiersContract={ColorsModifiersContract}
-              colorModifiersAddress={colorModifiersAddress}
-            />
-          </Route>
-          <Route path="/mainnetdai">
-            <Contract
-              name="DAI"
-              customContract={mainnetContracts && mainnetContracts.contracts && mainnetContracts.contracts.DAI}
-              signer={userSigner}
-              provider={mainnetProvider}
-              address={address}
-              blockExplorer="https://etherscan.io/"
-              contractConfig={contractConfig}
-              chainId={1}
-            />
-            {/*
+          <Contract
+            name="YourContract"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+          <Contract
+            name="ColorsNFT"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+          <Contract
+            name="ColorModifiers"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={colorModifiersAddress}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+          <Contract
+            name="Jackpot"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+        </Route>
+        <Route path="/hints">
+          <Hints
+            address={address}
+            yourLocalBalance={yourLocalBalance}
+            mainnetProvider={mainnetProvider}
+            price={price}
+          />
+        </Route>
+        <Route path="/exampleui">
+          <BuyAndModifyColor
+            address={address}
+            userSigner={userSigner}
+            mainnetProvider={mainnetProvider}
+            localProvider={localProvider}
+            yourLocalBalance={yourLocalBalance}
+            price={price}
+            tx={tx}
+            writeContracts={writeContracts}
+            readContracts={readContracts}
+            purpose={purpose}
+            whitePaint={whitePaint}
+            darkPaint={darkPaint}
+            userTables={userTables}
+            listOfTokensPerUser={listOfTokensPerUser}
+            colorTokenList={colorTokenList}
+            colorModifiersContract={colorModifiersContract}
+            colorModifiersAddress={colorModifiersAddress}
+            colorNFTContract={colorNFTContract}
+            colorsNFTAddress={colorsNFTAddress}
+          />
+        </Route>
+        <Route path="/mainnetdai">
+          <Contract
+            name="DAI"
+            customContract={mainnetContracts && mainnetContracts.contracts && mainnetContracts.contracts.DAI}
+            signer={userSigner}
+            provider={mainnetProvider}
+            address={address}
+            blockExplorer="https://etherscan.io/"
+            contractConfig={contractConfig}
+            chainId={1}
+          />
+          {/*
             <Contract
               name="UNI"
               customContract={mainnetContracts && mainnetContracts.contracts && mainnetContracts.contracts.UNI}
@@ -443,90 +473,89 @@ function App(props) {
               blockExplorer="https://etherscan.io/"
             />
             */}
-          </Route>
-          <Route path="/subgraph">
-            <Subgraph
-              subgraphUri={props.subgraphUri}
-              tx={tx}
-              writeContracts={writeContracts}
-              mainnetProvider={mainnetProvider}
-            />
-          </Route>
-        </Switch>
+        </Route>
+        <Route path="/subgraph">
+          <Subgraph
+            subgraphUri={props.subgraphUri}
+            tx={tx}
+            writeContracts={writeContracts}
+            mainnetProvider={mainnetProvider}
+          />
+        </Route>
+      </Switch>
 
-        <ThemeSwitch />
+      <ThemeSwitch />
 
-        {/* 👨‍💼 Your account is in the top right with a wallet at connect options */}
-        <div style={{ position: "fixed", textAlign: "right", right: 0, top: 0, padding: 10 }}>
-          <div style={{ display: "flex", flex: 1, alignItems: "center" }}>
-            {USE_NETWORK_SELECTOR && (
-              <div style={{ marginRight: 20 }}>
-                <NetworkSwitch
-                  networkOptions={networkOptions}
-                  selectedNetwork={selectedNetwork}
-                  setSelectedNetwork={setSelectedNetwork}
-                />
-              </div>
-            )}
-            <Account
-              useBurner={USE_BURNER_WALLET}
-              address={address}
-              localProvider={localProvider}
-              userSigner={userSigner}
-              mainnetProvider={mainnetProvider}
-              price={price}
-              web3Modal={web3Modal}
-              loadWeb3Modal={loadWeb3Modal}
-              logoutOfWeb3Modal={logoutOfWeb3Modal}
-              blockExplorer={blockExplorer}
-            />
-          </div>
-          {yourLocalBalance.lte(ethers.BigNumber.from("0")) && (
-            <FaucetHint localProvider={localProvider} targetNetwork={targetNetwork} address={address} />
+      {/* 👨‍💼 Your account is in the top right with a wallet at connect options */}
+      <div style={{ position: "fixed", textAlign: "right", right: 0, top: 0, padding: 10 }}>
+        <div style={{ display: "flex", flex: 1, alignItems: "center" }}>
+          {USE_NETWORK_SELECTOR && (
+            <div style={{ marginRight: 20 }}>
+              <NetworkSwitch
+                networkOptions={networkOptions}
+                selectedNetwork={selectedNetwork}
+                setSelectedNetwork={setSelectedNetwork}
+              />
+            </div>
           )}
+          <Account
+            useBurner={USE_BURNER_WALLET}
+            address={address}
+            localProvider={localProvider}
+            userSigner={userSigner}
+            mainnetProvider={mainnetProvider}
+            price={price}
+            web3Modal={web3Modal}
+            loadWeb3Modal={loadWeb3Modal}
+            logoutOfWeb3Modal={logoutOfWeb3Modal}
+            blockExplorer={blockExplorer}
+          />
         </div>
-
-        {/* 🗺 Extra UI like gas price, eth price, faucet, and support: */}
-        <div style={{ position: "fixed", textAlign: "left", left: 0, bottom: 20, padding: 10 }}>
-          <Row align="middle" gutter={[4, 4]}>
-            <Col span={8}>
-              <Ramp price={price} address={address} networks={NETWORKS} />
-            </Col>
-
-            <Col span={8} style={{ textAlign: "center", opacity: 0.8 }}>
-              <GasGauge gasPrice={gasPrice} />
-            </Col>
-            <Col span={8} style={{ textAlign: "center", opacity: 1 }}>
-              <Button
-                onClick={() => {
-                  window.open("https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA");
-                }}
-                size="large"
-                shape="round"
-              >
-                <span style={{ marginRight: 8 }} role="img" aria-label="support">
-                  💬
-                </span>
-                Support
-              </Button>
-            </Col>
-          </Row>
-
-          <Row align="middle" gutter={[4, 4]}>
-            <Col span={24}>
-              {
-                /*  if the local provider has a signer, let's show the faucet:  */
-                faucetAvailable ? (
-                  <Faucet localProvider={localProvider} price={price} ensProvider={mainnetProvider} />
-                ) : (
-                  ""
-                )
-              }
-            </Col>
-          </Row>
-        </div>
+        {yourLocalBalance.lte(ethers.BigNumber.from("0")) && (
+          <FaucetHint localProvider={localProvider} targetNetwork={targetNetwork} address={address} />
+        )}
       </div>
-    </DAppProvider>
+
+      {/* 🗺 Extra UI like gas price, eth price, faucet, and support: */}
+      <div style={{ position: "fixed", textAlign: "left", left: 0, bottom: 20, padding: 10 }}>
+        <Row align="middle" gutter={[4, 4]}>
+          <Col span={8}>
+            <Ramp price={price} address={address} networks={NETWORKS} />
+          </Col>
+
+          <Col span={8} style={{ textAlign: "center", opacity: 0.8 }}>
+            <GasGauge gasPrice={gasPrice} />
+          </Col>
+          <Col span={8} style={{ textAlign: "center", opacity: 1 }}>
+            <Button
+              onClick={() => {
+                window.open("https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA");
+              }}
+              size="large"
+              shape="round"
+            >
+              <span style={{ marginRight: 8 }} role="img" aria-label="support">
+                💬
+              </span>
+              Support
+            </Button>
+          </Col>
+        </Row>
+
+        <Row align="middle" gutter={[4, 4]}>
+          <Col span={24}>
+            {
+              /*  if the local provider has a signer, let's show the faucet:  */
+              faucetAvailable ? (
+                <Faucet localProvider={localProvider} price={price} ensProvider={mainnetProvider} />
+              ) : (
+                ""
+              )
+            }
+          </Col>
+        </Row>
+      </div>
+    </div>
   );
 }
 

@@ -1,54 +1,28 @@
-import { Button, Divider, Input, } from "antd";
-import React, { useState } from "react";
-import { useContractReader } from "eth-hooks";
+import { Button, Divider, } from "antd";
+import React from "react";
 import { ethers } from "ethers";
-import { useEthers, useEtherBalance, useContractFunction, useCall, useContractCall } from "@usedapp/core";
-import ColorsModifiers from "../contracts/ColorModifiers.json";
+import { useContractFunction, useCall } from "@usedapp/core";
 export default function BuyAndModifyColor({
-    purpose,
     address,
-    mainnetProvider,
-    localProvider,
-    yourLocalBalance,
-    price,
-    tx,
-    readContracts,
-    writeContracts,
-    whitePaint,
-    darkPaint,
-    userTables,
-    listOfTokensPerUser,
-    colorTokenList,
     userSigner,
-    ColorsModifiersContract,
-    colorModifiersAddress
+    colorModifiersContract,
+    colorModifiersAddress,
+    colorNFTContract,
+    colorsNFTAddress
 
 }) {
-    const [newRColor, setNewRColor] = useState("")
-    const [newGColor, setNewGColor] = useState("")
-    const [newBColor, setNewBColor] = useState("")
 
 
-    const ColorsModifiersABI = ColorsModifiers.abi;
+    const { send: mintERC1155Send } = useContractFunction(colorModifiersContract, "mint", userSigner)
+    const { send: mintERC721Send } = useContractFunction(colorNFTContract, "mint", userSigner)
 
-
-    // const ColorsModifiersInterface = new utils.Interface(ColorsModifiersABI);
+    const { send: safeTransferFromSend } = useContractFunction(colorModifiersContract, "safeTransferFrom", userSigner)
 
 
 
-
-    console.log("darkPaint", parseInt(darkPaint._hex, 16));
-
-    console.log(userTables);
-
-    const darkPaint2 = useContractReader(readContracts, "ColorModifiers", "getBalance", [address, 1])
-    console.log("darkPaint2", darkPaint2);
-
-    const { state: mintTokensState, send: mintTokensSend } = useContractFunction(ColorsModifiersContract, "mint", userSigner)
-
-    function useTotalSupply() {
+    function useTotalWhitePaint() {
         const { value, error } = useCall(colorModifiersAddress && {
-            contract: ColorsModifiersContract,
+            contract: colorModifiersContract,
             method: 'getBalanceWhitePaint',
             args: [address],
         }) ?? {}
@@ -59,168 +33,138 @@ export default function BuyAndModifyColor({
         return value?.[0]
     }
 
-    // function useTotalSupply() {
-    //     const [tokenBalance] =
-    //         useContractCall(
-    //             address &&
-    //             colorModifiersAddress && {
-    //                 abi: ColorsModifiersInterface,
-    //                 address: colorModifiersAddress,
-    //                 method: 'getBalanceWhitePaint',
-    //                 args: [address],
-    //             }
-    //         ) ?? []
-    //     return tokenBalance
-    // }
+    function useTotalDarkPaint() {
+        const { value, error } = useCall(colorModifiersAddress && {
+            contract: colorModifiersContract,
+            method: 'getBalanceWhitePaint',
+            args: [address],
+        }) ?? {}
+        if (error) {
+            console.error(error.message)
+            return undefined
+        }
+        return value?.[0]
+    }
 
-    console.log(address);
-    const totalSupply = useTotalSupply()
-    console.log("totalSupply", totalSupply);
-
-    const etherBalance = useEtherBalance(address);
-
-    console.log(etherBalance);
-
-
-    // const balanceOfOwner = useContractFunction(ColorsModifiersContract, "getBalanceDarkPaint", address, userSigner)
-
-
-
-    // console.log("balanceOfOwner", balanceOfOwner);
+    function useTotalListTokensERC721() {
+        const { value, error } = useCall(colorsNFTAddress && {
+            contract: colorNFTContract,
+            method: 'getColorsByOwner',
+            args: [address],
+        }) ?? {}
+        if (error) {
+            console.error(error.message)
+            return undefined
+        }
+        return value?.[0]
+    }
 
 
+    function useColorList() {
+        const { value, error } = useCall(colorsNFTAddress && {
+            contract: colorNFTContract,
+            method: '_colorTokenList',
+            args: [],
+        }) ?? {}
+        if (error) {
+            console.error(error.message)
+            return undefined
+        }
+        return value?.[0]
+    }
 
-    const darkPaintInt = parseInt(darkPaint._hex, 16);
-    const whitePaintInt = parseInt(whitePaint._hex, 16);
 
-    let RGB = [];
 
-    for (let i = 0; i < listOfTokensPerUser.length; i++) {
-        RGB.push({
-            id: parseInt(listOfTokensPerUser[i]?._hex),
-            R: parseInt(colorTokenList[listOfTokensPerUser[i]]?.R?._hex),
-            G: parseInt(colorTokenList[listOfTokensPerUser[i]]?.G?._hex),
-            B: parseInt(colorTokenList[listOfTokensPerUser[i]]?.B?._hex)
+    const totalListTokensERC271User = useTotalListTokensERC721();
+
+    const totalColorList = useColorList();
+
+
+    const colorsPerUser = [];
+
+    for (let i = 0; i < totalListTokensERC271User?.length; i++) {
+        colorsPerUser.push({
+            id: parseInt(totalListTokensERC271User[i]?._hex),
+            colorValue: parseInt(totalColorList[totalListTokensERC271User[i]])
+
+            // Transform to RGB to show at web page 
+
+            //          R = C / (256 ^ 2);
+
+            //         G = (C / 256) % 256;
+
+            //         B = C % 256
         });
     }
 
-    console.log(RGB);
+    console.log(colorsPerUser);
 
-    async function confirmTransaction() {
 
+    const TotalWhitePaintInt = parseInt(useTotalWhitePaint()?._hex, 16)
+
+    const TotalDarkPaintInt = parseInt(useTotalDarkPaint()?._hex, 16)
+
+
+
+    function mintERC721() {
         let valueInEther = ethers.utils.parseEther("" + 0.00001);
+        return mintERC721Send(1, 1, 1, { value: valueInEther });
+    }
 
-        const result = await tx(writeContracts["ColorsNFT"].mint(
-            newRColor,
-            newGColor,
-            newBColor,
-            { value: valueInEther }
-        ))
+    function getPaint() {
+        return mintERC1155Send();
+    }
+
+
+
+    function addPaint(id, tokenId) {
+
+
+        const byteNumber = "0x" + ("0".repeat(64) + id).slice(-64) + "";
+
+        safeTransferFromSend(address, colorsNFTAddress, tokenId, 1, byteNumber);
 
     }
 
-    async function addWhitePaint(Id) {
-
-        const byteNumber = "0x" + ("0".repeat(64) + Id).slice(-64) + "";
-
-        const result = await tx(writeContracts["ColorModifiers"].safeTransferFrom(
-            address, readContracts["ColorsNFT"].address, 1, 1, byteNumber
-
-        ))
-
-    }
-
-    async function test() {
-        return mintTokensSend();
-
-
-
-    }
-    async function addBlackPaint(Id) {
-
-        const byteNumber = "0x" + ("0".repeat(64) + Id).slice(-64) + "";
-
-        console.log(byteNumber)
-        const result = await tx(writeContracts["ColorModifiers"].safeTransferFrom(
-            address, readContracts["ColorsNFT"].address, 0, 1, byteNumber
-
-        ))
-
-
-    }
-
-    async function getPaint() {
-
-        const resultTx1 = await tx(writeContracts["ColorModifiers"].mint());
-
-    }
-
-    const { activateBrowserWallet, deactivate, account } = useEthers()
 
     return (
         <>
             <div style={{ maxWidth: 100, margin: "auto", marginTop: 32, marginBottom: 32 }}>
                 GET NFT COLOR
-                <Divider />
-                <div>
-                    <Input
-                        placeholder="Enter R"
-                        value={newRColor}
-                        onChange={(e) => { setNewRColor(e.target.value) }}
-                    />
-                </div>
-                <div>
-                    <Input
-                        placeholder="Enter G"
-                        value={newGColor}
-                        onChange={(e) => { setNewGColor(e.target.value) }}
-                    />
-                </div>
-                <div>
-                    <Input
-                        placeholder="Enter B"
-                        value={newBColor}
-                        onChange={(e) => { setNewBColor(e.target.value) }}
-                    />
-                </div>
-                <Divider />
-
                 <div>
                     <Button
-                        onClick={confirmTransaction}
+                        onClick={mintERC721}
                         type="primary"
                     >
                         Confirm
                     </Button>
                 </div>
 
-
-
             </div>
-            <Divider />
 
             <div style={{ maxWidth: 400, margin: "auto", marginTop: 32, marginBottom: 32 }}>
                 <h4> Your color NFTs</h4>
                 <ul>
-                    {RGB.map(userTable => (
+                    {colorsPerUser.map(userTable => (
                         <>
                             <li style={{ display: "flex", margin: "auto" }} key={userTable.id} >
                                 <Button size="small"
-                                    onClick={() => addWhitePaint(userTable.id)}
+                                    onClick={() => addPaint(userTable.id, 1)}
                                 >
                                     White Paint
                                 </Button>
                                 &nbsp;
                                 &nbsp;
-                                <h6 style={{ color: `rgb(${userTable.R}, ${userTable.G},${userTable.B})` }}>
+                                {/* <h6 style={{ color: `rgb(${userTable.R}, ${userTable.G},${userTable.B})` }}>
                                     {userTable.R} = {userTable.G} = {userTable.B}
-                                </h6>
+                                </h6> */}
+                                <h1> {userTable.colorValue}</h1>
                                 &nbsp;
                                 &nbsp;
                                 <Button size="small"
-                                    onClick={() => addBlackPaint(userTable.id)}
+                                    onClick={() => addPaint(userTable.id, 0)}
                                 >
-                                    black paint
+                                    dark paint
                                 </Button>
                             </li>
                         </>
@@ -235,21 +179,16 @@ export default function BuyAndModifyColor({
             <Divider />
 
             <div>
-                <h4>Your dark paints {darkPaintInt}</h4>
+                <h4>Your dark paints {TotalDarkPaintInt}</h4>
 
-                <h4>Your white paints {whitePaintInt}</h4>
+                <h4>Your white paints {TotalWhitePaintInt}</h4>
             </div>
             <Button size="small"
-                onClick={() => test()}
+                onClick={() => getPaint()}
             >
-                test
+                GET PAINT
             </Button>
-            <Button size="small"
-                onClick={activateBrowserWallet}>
-                Connect Wallet to useDapp
-            </Button>
-            <h1>account according to useDapp: {account}</h1>
-            <h1>test {totalSupply}</h1>
+
 
 
         </>

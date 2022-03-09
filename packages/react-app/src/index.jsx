@@ -6,6 +6,8 @@ import ReactDOM from "react-dom";
 import App from "./App";
 import "./index.css";
 
+import { DAppProvider, Rinkeby } from "@usedapp/core"
+
 const themes = {
   dark: `${process.env.PUBLIC_URL}/dark-theme.css`,
   light: `${process.env.PUBLIC_URL}/light-theme.css`,
@@ -24,7 +26,16 @@ ReactDOM.render(
   <ApolloProvider client={client}>
     <ThemeSwitcherProvider themeMap={themes} defaultTheme={prevTheme || "light"}>
       <BrowserRouter>
-        <App subgraphUri={subgraphUri} />
+        <DAppProvider config={{
+          networks: [Rinkeby],
+          notifications: {
+            expirationPeriod: 1000,
+            checkInterval: 1000
+          }
+        }}>
+          <App subgraphUri={subgraphUri} />
+        </DAppProvider>
+
       </BrowserRouter>
     </ThemeSwitcherProvider>
   </ApolloProvider>,
