@@ -1,11 +1,8 @@
-import { Button, Card, DatePicker, Divider, Input, Progress, Slider, Spin, Switch } from "antd";
+import { Button, Divider, Input, } from "antd";
 import React, { useState } from "react";
-import { utils } from "ethers";
-import { SyncOutlined } from "@ant-design/icons";
-import { useContractReader, usePoller } from "eth-hooks";
-import { Address, Balance, Events } from "../components";
+import { useContractReader } from "eth-hooks";
 import { ethers } from "ethers";
-import { useEthers, useEtherBalance, useContractFunction, useCall, useContractCall } from "@usedapp/core"
+import { useEthers, useEtherBalance, useContractFunction, useCall, useContractCall } from "@usedapp/core";
 import ColorsModifiers from "../contracts/ColorModifiers.json";
 export default function BuyAndModifyColor({
     purpose,
@@ -158,6 +155,8 @@ export default function BuyAndModifyColor({
 
     }
 
+    const { activateBrowserWallet, deactivate, account } = useEthers()
+
     return (
         <>
             <div style={{ maxWidth: 100, margin: "auto", marginTop: 32, marginBottom: 32 }}>
@@ -245,6 +244,11 @@ export default function BuyAndModifyColor({
             >
                 test
             </Button>
+            <Button size="small"
+                onClick={activateBrowserWallet}>
+                Connect Wallet to useDapp
+            </Button>
+            <h1>account according to useDapp: {account}</h1>
             <h1>test {totalSupply}</h1>
 
 
